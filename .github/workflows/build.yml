@@ -27,7 +27,7 @@ jobs:
       - name: Parse the companies house data
         run: |
           python parse.py
-      - name: Export data from ftm.store
+      - name: Aggregate fragmented entities
         run: |
           make data/export/psc.json
       - name: Publish data to data.opensanctions.org
