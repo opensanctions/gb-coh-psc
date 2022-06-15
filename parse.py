@@ -6,6 +6,7 @@ from zipfile import ZipFile
 from io import TextIOWrapper
 from datetime import datetime
 from urllib.parse import urljoin
+from ftmstore import get_dataset
 
 from zavod import PathLike, init_context, Zavod
 from zavod.parse import make_address
@@ -65,7 +66,7 @@ def parse_base_data(context: Zavod):
         entity.add("legalForm", row.pop("CompanyCategory"))
         entity.add("country", row.pop("CountryOfOrigin"))
         entity.add("jurisdiction", "gb")
-        entity.add("sourceUrl", row.pop("URI"))
+        # entity.add("sourceUrl", row.pop("URI"))
 
         for i in range(1, 5):
             sector = row.pop(f"SICCode.SicText_{i}")
@@ -101,7 +102,7 @@ def parse_base_data(context: Zavod):
             entity.add("addressEntity", addr.id)
             yield addr
 
-        pprint(entity.to_dict())
+        # pprint(entity.to_dict())
         yield entity
 
 
@@ -218,5 +219,11 @@ def parse_all(context):
 
 if __name__ == "__main__":
     with init_context("gb_coh_psc", "gb-coh") as context:
-
-        parse_all()
+        db_path = context.get_resource_path("ftm.store")
+        db_uri = f"sqlite:///{db_path.as_posix()}"
+        dataset = get_dataset(context.name, database_uri=db_uri)
+        dataset.delete()
+        bulk = dataset.bulk(size=5000)
+        for entity in parse_all(context):
+            bulk.put(entity)
+        bulk.flush()
