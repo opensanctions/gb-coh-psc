@@ -22,6 +22,7 @@ KINDS = {
     "legal-person-person-with-significant-control": "Organization",
     "super-secure-person-with-significant-control": "",
     "persons-with-significant-control-statement": "",
+    "exemptions": "",
 }
 
 
@@ -146,7 +147,10 @@ def parse_psc_data(context: Zavod):
     for idx, row in enumerate(read_psc_data(data_path)):
         if idx > 0 and idx % 10000 == 0:
             context.log.info("PSC statements: %d..." % idx)
-        company_nr = row.pop("company_number")
+        company_nr = row.pop("company_number", None)
+        if company_nr is None:
+            context.log.warning("No company number: %r" % row)
+            continue
         data = row.pop("data")
         data.pop("etag", None)
         url = data.pop("links").pop("self")
