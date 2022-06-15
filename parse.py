@@ -1,4 +1,6 @@
+from concurrent.futures import ThreadPoolExecutor, wait
 import csv
+from functools import cache
 import json
 from lxml import html
 from pprint import pprint
@@ -6,9 +8,9 @@ from zipfile import ZipFile
 from io import TextIOWrapper
 from datetime import datetime
 from urllib.parse import urljoin
-from ftmstore import get_dataset
 
 from zavod import PathLike, init_context, Zavod
+from zavod.store import write_entity
 from zavod.parse import make_address
 
 BASE_URL = "http://download.companieshouse.gov.uk/en_output.html"
@@ -23,10 +25,22 @@ KINDS = {
 }
 
 
+def company_id(context: Zavod, company_nr):
+    return f"{context.prefix}-{company_nr}"
+
+
+@cache
 def parse_date(text):
     if text is None or not len(text):
         return None
     return datetime.strptime(text, "%d/%m/%Y").date()
+
+
+@cache
+def clean_sector(text):
+    sectors = text.split(" - ", 1)
+    if len(sectors) > 1:
+        return sectors[-1]
 
 
 def get_base_data_url(context: Zavod):
@@ -59,7 +73,7 @@ def parse_base_data(context: Zavod):
             context.log.info("Companies: %d..." % idx)
         company_nr = row.pop("CompanyNumber")
         entity = context.make("Company")
-        entity.id = context.make_slug(company_nr)
+        entity.id = company_id(context, company_nr)
         entity.add("name", row.pop("CompanyName"))
         entity.add("registrationNumber", company_nr)
         entity.add("status", row.pop("CompanyStatus"))
@@ -70,9 +84,7 @@ def parse_base_data(context: Zavod):
 
         for i in range(1, 5):
             sector = row.pop(f"SICCode.SicText_{i}")
-            sectors = sector.split(" - ", 1)
-            if len(sectors) > 1:
-                entity.add("sector", sectors[-1])
+            entity.add("sector", clean_sector(sector))
         inc_date = parse_date(row.pop("IncorporationDate"))
         entity.add("incorporationDate", inc_date)
         dis_date = parse_date(row.pop("DissolutionDate"))
@@ -145,6 +157,7 @@ def parse_psc_data(context: Zavod):
             continue
         if schema is None:
             pprint((kind, data))
+            continue
         psc = context.make(schema)
         psc.id = context.make_slug("psc", company_nr, psc_id)
         psc.add("name", data.pop("name"))
@@ -197,7 +210,7 @@ def parse_psc_data(context: Zavod):
         link = context.make("Ownership")
         link.id = context.make_slug("stmt", company_nr, psc_id)
         link.add("owner", psc.id)
-        link.add("asset", context.make_slug(company_nr))
+        link.add("asset", company_id(context, company_nr))
         link.add("modifiedAt", data.pop("notified_on"))
         link.add("endDate", data.pop("ceased_on", None))
 
@@ -212,18 +225,29 @@ def parse_psc_data(context: Zavod):
         yield link
 
 
-def parse_all(context):
-    yield from parse_base_data(context)
-    yield from parse_psc_data(context)
+def process_base_data(context: Zavod):
+    out_path = context.get_resource_path("base_data.json")
+    with open(out_path, "wb") as fh:
+        for entity in parse_base_data(context):
+            write_entity(fh, entity)
+
+
+def process_psc_data(context: Zavod):
+    out_path = context.get_resource_path("psc_data.json")
+    with open(out_path, "wb") as fh:
+        for entity in parse_psc_data(context):
+            write_entity(fh, entity)
+
+
+def process_all(context):
+    with ThreadPoolExecutor(max_workers=3) as pool:
+        base_fut = pool.submit(process_base_data, context)
+        psc_fut = pool.submit(process_psc_data, context)
+        wait((base_fut, psc_fut))
+        base_fut.result()
+        psc_fut.result()
 
 
 if __name__ == "__main__":
     with init_context("gb_coh_psc", "gb-coh") as context:
-        db_path = context.get_resource_path("ftm.store")
-        db_uri = f"sqlite:///{db_path.as_posix()}"
-        dataset = get_dataset(context.name, database_uri=db_uri)
-        dataset.delete()
-        bulk = dataset.bulk(size=5000)
-        for entity in parse_all(context):
-            bulk.put(entity)
-        bulk.flush()
+        process_all(context)

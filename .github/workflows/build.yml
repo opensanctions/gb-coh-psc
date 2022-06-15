@@ -29,8 +29,7 @@ jobs:
           python parse.py
       - name: Export data from ftm.store
         run: |
-          mkdir -p data/export
-          ftm store iterate -d gb_coh_psc --db sqlite:///data/ftm.store -o data/export/psc.json
+          make data/export/psc.json
       - name: Publish data to data.opensanctions.org
         env:
           AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
