@@ -146,7 +146,7 @@ def parse_psc_data(context: Zavod):
         if schema is None:
             pprint((kind, data))
         psc = context.make(schema)
-        psc.id = context.make_slug("psc", psc_id)
+        psc.id = context.make_slug("psc", company_nr, psc_id)
         psc.add("name", data.pop("name"))
         nationality = data.pop("nationality", None)
         if psc.schema.is_a("Person"):
