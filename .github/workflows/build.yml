@@ -27,7 +27,7 @@ jobs:
       - name: Parse the companies house data
         run: |
           python parse.py
-      - name: Parse the companies house data
+      - name: Export data from ftm.store
         run: |
           mkdir -p data/export
           ftm store iterate -d gb_coh_psc --db sqlite:///data/ftm.store -o data/export/psc.json
