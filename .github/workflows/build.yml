@@ -17,6 +17,12 @@ jobs:
         uses: actions/setup-python@v1
         with:
           python-version: "3.9"
+      - name: Remove software from the runner image
+        run: |
+          sudo rm -rf /usr/share/dotnet
+          sudo rm -rf /opt/ghc
+          sudo rm -rf "$AGENT_TOOLSDIRECTORY"
+          df -h
       - name: Install dependencies
         env:
           DEBIAN_FRONTEND: noninteractive
@@ -29,7 +35,10 @@ jobs:
           python parse.py
       - name: Aggregate fragmented entities
         run: |
-          make data/export/psc.json
+          sort -o data/combined.json data/psc_data.json data/base_data.json
+          rm data/psc_data.json data/base_data.json
+          mkdir -p data/export
+	        zavod sorted-merge -o data/export/psc.json data/combined.json
       - name: Publish data to data.opensanctions.org
         env:
           AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
