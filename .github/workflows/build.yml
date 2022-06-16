@@ -2,7 +2,7 @@ name: build
 
 on:
   schedule:
-    - cron: "0 4 * * *"
+    - cron: "0 2 * * *"
   workflow_dispatch: {}
 
 jobs:
@@ -25,12 +25,15 @@ jobs:
         env:
           DEBIAN_FRONTEND: noninteractive
         run: |
+          python --version
+          python3 --version
+          which python
           sudo apt-get install -y -qq libicu-dev wget
           pip install pyicu awscli
           pip install -r requirements.txt
       - name: Parse the companies house data
         run: |
-          python parse.py
+          python3 parse.py
       - name: Aggregate fragmented entities
         run: |
           mkdir -p data/export
