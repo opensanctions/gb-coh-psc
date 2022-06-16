@@ -35,10 +35,10 @@ jobs:
           python parse.py
       - name: Aggregate fragmented entities
         run: |
+          mkdir -p data/export
           sort -o data/combined.json data/psc_data.json data/base_data.json
           rm data/psc_data.json data/base_data.json
-          mkdir -p data/export
-	        zavod sorted-merge -o data/export/psc.json data/combined.json
+          zavod sorted-merge -o data/export/psc.json data/combined.json
       - name: Publish data to data.opensanctions.org
         env:
           AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
