@@ -27,7 +27,8 @@ KINDS = {
 
 
 def company_id(context: Zavod, company_nr):
-    return f"oc-companies-gb-{company_nr}"
+    nr = company_nr.lower()
+    return f"oc-companies-gb-{nr}"
 
 
 @cache
