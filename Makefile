@@ -5,4 +5,4 @@ data/combined.json:
           
 data/export/psc.json: data/combined.json
 	mkdir -p data/export
-	zavod sorted-merge -o data/export/psc.json data/combined.json
+	ftm sorted-aggregate -o data/export/psc.json -i data/combined.json
