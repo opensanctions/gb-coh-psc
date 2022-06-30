@@ -10,7 +10,6 @@ from datetime import datetime
 from urllib.parse import urljoin
 
 from zavod import PathLike, init_context, Zavod
-from zavod.store import write_entity
 from zavod.parse import make_address
 
 BASE_URL = "http://download.companieshouse.gov.uk/en_output.html"
@@ -114,10 +113,10 @@ def parse_base_data(context: Zavod):
         )
         if addr.id is not None:
             entity.add("addressEntity", addr.id)
-            yield addr
+            context.emit(addr)
 
         # pprint(entity.to_dict())
-        yield entity
+        context.emit(entity)
 
 
 def get_psc_data_url(context: Zavod):
@@ -226,22 +225,20 @@ def parse_psc_data(context: Zavod):
         if len(data):
             pprint(data)
         # pprint(link.to_dict())
-        yield psc
-        yield link
+        context.emit(psc)
+        context.emit(link)
 
 
 def process_base_data(context: Zavod):
     out_path = context.get_resource_path("base_data.json")
     with open(out_path, "wb") as fh:
-        for entity in parse_base_data(context):
-            write_entity(fh, entity)
+        parse_base_data(context)
 
 
 def process_psc_data(context: Zavod):
     out_path = context.get_resource_path("psc_data.json")
     with open(out_path, "wb") as fh:
-        for entity in parse_psc_data(context):
-            write_entity(fh, entity)
+        parse_psc_data(context)
 
 
 def process_all(context):
