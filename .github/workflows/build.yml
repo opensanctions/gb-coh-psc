@@ -34,9 +34,9 @@ jobs:
           python3 parse.py
       - name: Aggregate fragmented entities
         run: |
+          sort -o data/combined.json data/fragments.json
+          rm data/fragments.json
           mkdir -p data/export
-          sort -o data/combined.json data/psc_data.json data/base_data.json
-          rm data/psc_data.json data/base_data.json
           ftm sorted-aggregate -o data/export/psc.json -i data/combined.json
       - name: Publish data to data.opensanctions.org
         env:
