@@ -199,7 +199,7 @@ def parse_psc_data(context: Zavod):
         )
         if addr.id is not None:
             psc.add("addressEntity", addr.id)
-            yield addr
+            context.emit(addr)
 
         ident = data.pop("identification", {})
         reg_nr = ident.pop("registration_number", None)
@@ -229,22 +229,10 @@ def parse_psc_data(context: Zavod):
         context.emit(link)
 
 
-def process_base_data(context: Zavod):
-    out_path = context.get_resource_path("base_data.json")
-    with open(out_path, "wb") as fh:
-        parse_base_data(context)
-
-
-def process_psc_data(context: Zavod):
-    out_path = context.get_resource_path("psc_data.json")
-    with open(out_path, "wb") as fh:
-        parse_psc_data(context)
-
-
-def process_all(context):
+def parse_all(context):
     with ThreadPoolExecutor(max_workers=3) as pool:
-        base_fut = pool.submit(process_base_data, context)
-        psc_fut = pool.submit(process_psc_data, context)
+        base_fut = pool.submit(parse_base_data, context)
+        psc_fut = pool.submit(parse_psc_data, context)
         wait((base_fut, psc_fut))
         base_fut.result()
         psc_fut.result()
@@ -252,4 +240,4 @@ def process_all(context):
 
 if __name__ == "__main__":
     with init_context("gb_coh_psc", "gb-coh") as context:
-        process_all(context)
+        parse_all(context)
