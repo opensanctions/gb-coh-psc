@@ -160,7 +160,7 @@ def parse_psc_data(context: Zavod):
         if schema == "":
             continue
         if schema is None:
-            pprint((kind, data))
+            context.log.warn("Unknown kind of PSC", kind=kind)
             continue
         psc = context.make(schema)
         psc.id = context.make_slug("psc", company_nr, psc_id)
