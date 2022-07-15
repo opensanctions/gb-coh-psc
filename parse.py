@@ -81,6 +81,9 @@ def parse_base_data(context: Zavod):
         entity.add("legalForm", row.pop("CompanyCategory"))
         entity.add("country", row.pop("CountryOfOrigin"))
         entity.add("jurisdiction", "gb")
+
+        oc_url = f"https://opencorporates.com/companies/gb/{company_nr}"
+        entity.add("opencorporatesUrl", oc_url)
         # entity.add("sourceUrl", row.pop("URI"))
 
         for i in range(1, 5):
