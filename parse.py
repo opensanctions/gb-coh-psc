@@ -65,8 +65,7 @@ def read_base_data_csv(path: PathLike):
 def parse_base_data(context: Zavod):
     data_url = get_base_data_url(context)
     if data_url is None:
-        context.log.error("Base data zip URL not found!")
-        return
+        raise RuntimeError("Base data zip URL not found!")
     data_path = context.fetch_resource("base_data.zip", data_url)
     context.log.info("Loading: %s" % data_path)
     for idx, row in enumerate(read_base_data_csv(data_path)):
@@ -143,8 +142,7 @@ def read_psc_data(path: PathLike):
 def parse_psc_data(context: Zavod):
     data_url = get_psc_data_url(context)
     if data_url is None:
-        context.log.error("PSC data zip URL not found!")
-        return
+        raise RuntimeError("PSC data zip URL not found!")
     data_path = context.fetch_resource("psc_data.zip", data_url)
     context.log.info("Loading: %s" % data_path)
     for idx, row in enumerate(read_psc_data(data_path)):
