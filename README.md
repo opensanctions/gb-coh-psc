@@ -1,3 +1,7 @@
+# [ARCHIVED]
+
+moved to here: https://github.com/opensanctions/graph
+
 # UK Companies House PSC Parser
 
 Convert the UK companies house base data product and PSC (persons with significant control) to FollowTheMoney format.
